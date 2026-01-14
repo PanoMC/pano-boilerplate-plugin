@@ -13,9 +13,7 @@ const baseConfig = {
   },
   plugins: [
     del({
-      targets: process.env.DEV
-        ? ["client/*", "server/*"]
-        : ["src/main/resources/plugin-ui/*"], // Targets to clean
+      targets: ["src/main/resources/plugin-ui/*"], // Always clean the resources folder
       runOnce: true, // Run only once
     }),
     production && terser()
@@ -29,7 +27,7 @@ export default [
     ...baseConfig,
     output: {
       ...baseConfig.output,
-      dir: process.env.DEV ? "server" : "src/main/resources/plugin-ui/server", // Server directory
+      dir: "src/main/resources/plugin-ui/server", // Server directory
       entryFileNames: "server.mjs", // Server entry file
     },
     plugins: [
@@ -51,7 +49,7 @@ export default [
     ...baseConfig,
     output: {
       ...baseConfig.output,
-      dir: process.env.DEV ? "client" : "src/main/resources/plugin-ui/client", // Client directory
+      dir: "src/main/resources/plugin-ui/client", // Client directory
       entryFileNames: "client.mjs", // Client entry file
     },
     external: (id) => id.startsWith("svelte"),
