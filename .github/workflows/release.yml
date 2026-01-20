@@ -9,7 +9,7 @@ name: Pano Plugin Build
 
 on:
   push:
-    branches: [ "dev", "main" ]
+    branches: ['dev', 'main']
 
 permissions:
   contents: read
