@@ -4,7 +4,7 @@
     "": {
       "name": "SvelteComponent",
       "devDependencies": {
-        "@panomc/sdk": "1.0.0-dev.10",
+        "@panomc/sdk": "1.0.0-dev.21",
         "@rollup/plugin-node-resolve": "^16.0.0",
         "@rollup/plugin-terser": "^0.4.4",
         "cross-env": "^10.1.0",
@@ -41,7 +41,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@panomc/sdk": ["@panomc/sdk@1.0.0-dev.10", "", { "peerDependencies": { "svelte": "^5.46.1" } }, "sha512-STyeVP4tXuz7AS8Ac2/cgunrpsLYIA4fPEzu7kt4pabvrJWCOekCShyjAza8WZGvIfeDlc6F2HWc7plVk8xPFQ=="],
+    "@panomc/sdk": ["@panomc/sdk@1.0.0-dev.21", "", { "peerDependencies": { "svelte": "^5.46.1" } }, "sha512-JNngXQLnH0KbbvBLbAMsEG4SesrFe2/LNJIhH9WtnhbXDyRnMyBu3CBVbnce1EnvIGA8sTlYUaqah6PJJys9Tw=="],
 
     "@rollup/plugin-node-resolve": ["@rollup/plugin-node-resolve@16.0.3", "", { "dependencies": { "@rollup/pluginutils": "^5.0.1", "@types/resolve": "1.20.2", "deepmerge": "^4.2.2", "is-module": "^1.0.0", "resolve": "^1.22.1" }, "peerDependencies": { "rollup": "^2.78.0||^3.0.0||^4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-lUYM3UBGuM93CnMPG1YocWu7X802BrNF3jW2zny5gQyLQgRFJhV1Sq0Zi74+dh/6NBx1DxFC4b4GXg9wUCG5Qg=="],
 
