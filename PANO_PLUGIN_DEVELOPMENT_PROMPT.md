@@ -17,6 +17,7 @@ A Pano plugin consists of two main parts:
 - **Repository**: Always `panomc/`.
 - **Versioning**: For official plugins, versioning is handled automatically; do not manually increment.
 - **Manifest**: Defined in `gradle.properties` (id, name, description, dependencies, main class).
+- **Import Style**: Never use fully qualified names (FQN) within the code itself unless absolutely necessary (e.g., to resolve naming conflicts). Always prefer standard imports at the top of the file.
 
 ---
 
@@ -31,6 +32,9 @@ The SDK acts as the bridge between the Host (Pano) and your Plugin.
 - **API Utilities**: `@panomc/sdk/utils/api` includes `ApiUtil` for network requests and `buildQueryParams`.
 - **Localization**: `@panomc/sdk/utils/language` provides the `_` (underscore) function for translations.
 - **Component Utilities**: `viewComponent` from `@panomc/sdk/utils/component` is used to wrap dynamic imports for proper Svelte hydration.
+- **Standard Components**: Core Pano components are accessed via `@panomc/sdk/components/panel` (for Panel UI) and `@panomc/sdk/components/theme` (for Theme UI).
+    - *Example (Panel)*: `import { Editor, Date, Modal, Button } from '@panomc/sdk/components/panel';`
+    - *Example (Theme)*: `import { Card, Loader } from '@panomc/sdk/components/theme';`
 
 #### Core SDK Features:
 - **UI Registration**: `pano.ui.page.register` allows plugins to register new routes with specific components and layouts.
@@ -43,12 +47,10 @@ The SDK acts as the bridge between the Host (Pano) and your Plugin.
 ### 📂 Directory Structure
 - `src/panel/`: Panel-specific logic and pages.
 - `src/theme/`: Theme-specific logic and pages.
-- `src/panelcomponents/`: UI components for the Panel.
-- `src/themecomponents/`: UI components for the Theme.
-- `src/modals/`: Modal components.
-- `src/toasts/`: Toast notifications.
-- `src/buttons/`: Reusable button components.
-- `src/pages/`: Main page components.
+- `src/panel/components/`: UI components for the Panel.
+- `src/theme/components/`: UI components for the Theme.
+- `src/panel/modals/`, `src/theme/modals/`: Modal components.
+- `src/panel/pages/`, `src/theme/pages/`: Main page components.
 
 ### 🧩 Component Guidelines
 - **Dynamic Loading**: Components registered to the Pano API **must** be loaded dynamically to minimize initial load weight.
@@ -67,7 +69,10 @@ Sequence blocks in Svelte files as follows:
 
 ### ✨ Design & Visual Consistency
 - **Aesthetic Benchmarks**: Always refer to **panel-ui** and **vanilla-theme** for visual inspiration and consistency. Designs must feel like a native part of the Pano ecosystem.
-- **Table Integration**: Tables should mirror the structure, padding, and interactive elements (search, pagination, actions) used in `panel-ui` pages such as the Players or Announcements tables.
+- **Table Integration**: Tables should mirror the structure, padding, and interactive elements used in `panel-ui` pages (e.g., Players or Announcements).
+    - **Pagination**: Always implement 10-item pagination unless explicitly requested otherwise.
+    - **Search**: Always include a search component (`SearchInput` in Panel) for data filtering.
+    - **Row Actions**: Table row actions (edit, delete, view, etc.) must follow the design and implementation patterns used in `panel-ui` (e.g., action buttons or dropdowns at the end of the row).
 - **Environment Context**: UI elements must adapt their color schemes and styles based on whether they are rendered in the Panel or a Theme.
 - **UI APIs & Hooks**: 
     - Leverage Pano's existing Hook system for injecting components into pages.
@@ -120,6 +125,7 @@ override suspend fun onUninstall() {
     - `@DBEntity`: For data models.
     - `@Migration`: For versioned DB changes.
     - `@Dao`: For DAO implementations.
+- **Naming Convention**: Keep **DAO** and **Model** names as close as possible (e.g., `AnnouncementModel` and `AnnouncementDao`), as the model name is automatically converted into the database table name.
 - **Implementation**: Extend abstract Dao classes and provide the model class. Ensure `uninstall` logic is implemented.
 
 ### 🛣️ API & Routing
@@ -133,11 +139,24 @@ override suspend fun onUninstall() {
     - **Body**: Specify `required body` for schema-based objects.
 - **Permissions**: Use Pano's `authProvider` from `applicationContext` to enforce requirements.
 - **Activity Logs**: All Panel APIs **must** define activity logs.
+- **Error Handling**:
+    - **Reusable Errors**: Prefer using Pano's built-in error objects (from `com.panomc.platform.error`) whenever possible.
+    - **Plugin-Specific Errors**: If a custom error is needed, define it in the plugin's `error/` package by extending `com.panomc.platform.model.Error`.
+    - **Messages**: General practice is that error objects **do not** take a message argument (they are identified by their class name/error code). Only include a message if absolutely necessary.
 
 ### 🔐 Permissions & Configuration
 - **Permissions**: Define in `permission/` package.
 - **Inheritance**: Extend `PanelPermission`.
 - **Annotation**: `@PermissionDefinition`.
+- **Implementation Rules**:
+    - **Icon**: You **must** provide a FontAwesome icon name to the `PanelPermission` constructor (e.g., `PanelPermission("fa-bullhorn")`).
+    - **Node**: Define the unique permission node string in the `@PermissionDefinition` annotation (e.g., `@PermissionDefinition("pano.plugin.announcement.manage")`).
+
+**Permission Definition Example:**
+```kotlin
+@PermissionDefinition("pano.plugin.announcement.manage")
+class ManageAnnouncementsPermission : PanelPermission("fa-bullhorn")
+```
 - **Config**: Use `PluginConfigManager` for settings. 
     - Keep general settings in the **Config** classes whenever possible.
     - **Enum First**: Always use **Enums** instead of static strings in both Config classes and Database entities (`@DBEntity`) to ensure type safety and consistency.
