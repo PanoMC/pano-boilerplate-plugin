@@ -15,6 +15,7 @@ val pf4jVersion: String by project
 val vertxVersion: String by project
 val gsonVersion: String by project
 val handlebarsVersion: String by project
+val springContextVersion: String by project
 val bootstrap = (project.findProperty("bootstrap") as String?)?.toBoolean() ?: false
 val noui = project.hasProperty("noui")
 val pluginsDir: File? by rootProject.extra
@@ -67,7 +68,7 @@ dependencies {
     if (bootstrap) {
         compileOnly(project(mapOf("path" to ":Pano")))
     } else {
-        compileOnly("com.github.panomc:pano:v1.0.0-alpha.306")
+        compileOnly("com.github.panomc:pano:v1.0.0-alpha.336")
     }
 
     compileOnly(kotlin("stdlib-jdk8"))
@@ -75,6 +76,16 @@ dependencies {
 
     compileOnly("org.pf4j:pf4j:${pf4jVersion}")
     kapt("org.pf4j:pf4j:${pf4jVersion}")
+    compileOnly("io.vertx:vertx-web:${vertxVersion}")
+    compileOnly("io.vertx:vertx-lang-kotlin:${vertxVersion}")
+    compileOnly("io.vertx:vertx-lang-kotlin-coroutines:${vertxVersion}")
+    compileOnly("io.vertx:vertx-jdbc-client:${vertxVersion}")
+    compileOnly("io.vertx:vertx-json-schema:${vertxVersion}")
+    compileOnly("io.vertx:vertx-web-validation:${vertxVersion}")
+    compileOnly("io.vertx:vertx-mysql-client:${vertxVersion}")
+
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    compileOnly("org.springframework:spring-context:${springContextVersion}")
 }
 
 tasks {
