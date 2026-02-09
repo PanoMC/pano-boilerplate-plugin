@@ -7,6 +7,8 @@ import path from 'node:path';
 
 const production = !process.env.DEV;
 
+const bundleSdk = process.env.BUNDLE_SDK === 'true';
+
 function manifestPlugin() {
   return {
     name: 'manifest',
@@ -33,7 +35,7 @@ const baseConfig = {
     production && terser(),
     manifestPlugin(),
   ],
-  preserveEntrySignatures: 'strict',
+  preserveEntrySignatures: 'strict'
 };
 
 export default [
@@ -67,17 +69,30 @@ export default [
       dir: 'src/main/resources/plugin-ui/client', // Client directory
       entryFileNames: 'client.mjs', // Client entry file
     },
-    external: (id) => id.startsWith('svelte'),
+    // We should externalize svelte here too so that SSR uses the host's svelte instance
+    // external: (id) => id.startsWith('@panomc/sdk') || id.startsWith('svelte'),
+    // In production SSR builds, bundle SDK into the plugin so it's self-contained
+    // In dev mode, keep SDK external for faster rebuilds
+    external: (id) => {
+      if (bundleSdk) return false;
+      // Always externalize svelte as SSR needs to use the host's svelte instance
+      if (id.startsWith('svelte')) return true;
+      // In dev mode, also externalize SDK for faster rebuilds
+      // In production (non-dev), bundle SDK to avoid module resolution issues
+      if (id.startsWith('@panomc/sdk')) return !production;
+      return false;
+    },
     plugins: [
       ...baseConfig.plugins,
       resolve({
         browser: true,
-        dedupe: ['svelte'],
+        dedupe: ['svelte', '@panomc/sdk'],
       }),
       svelte({
         compilerOptions: {
           generate: 'client',
           css: 'external',
+          dev: !production,
         },
         emitCss: false,
       }),
