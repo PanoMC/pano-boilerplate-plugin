@@ -88,7 +88,122 @@ dependencies {
     compileOnly("org.springframework:spring-context:${springContextVersion}")
 }
 
+val panoLicensePublicKey: String? by project
+val premiumLicenseSrcDir = layout.buildDirectory.dir("generated/license-source")
+
+/**
+ * Resolves the panomc.com license verification public key for build-time embedding.
+ *
+ * Property / env semantics (highest priority first):
+ *   - `-PpanoLicensePublicKey=<base64|PEM>`  explicit override
+ *   - `PANO_LICENSE_PUBLIC_KEY`             same when property unset
+ *   - `-PlicenseServer=dev|prod|<url>`       auto-fetch from license server
+ *   - `PANO_LICENSE_SERVER`                 same when property unset (e.g. CI)
+ *   - (none)                                 empty key → plugin builds as FREE
+ *
+ * Result is cached under `build/license-key-cache/`.
+ */
+fun resolveLicensePublicKey(): String {
+    val explicitProp = (panoLicensePublicKey ?: "").let(::stripPemAndWhitespace).takeIf { it.isNotEmpty() }
+    val explicitEnv = System.getenv("PANO_LICENSE_PUBLIC_KEY")?.trim()?.takeIf { it.isNotEmpty() }
+        ?.let(::stripPemAndWhitespace)?.takeIf { it.isNotEmpty() }
+    val explicit = explicitProp ?: explicitEnv
+    if (explicit != null) return explicit
+
+    val serverProp = (project.findProperty("licenseServer") as String?)?.trim().orEmpty()
+    val serverEnv = System.getenv("PANO_LICENSE_SERVER")?.trim().orEmpty()
+    val server = serverProp.ifEmpty { serverEnv }
+    if (server.isEmpty()) return ""
+
+    val baseUrl = when (server.lowercase()) {
+        "dev" -> "https://api-dev.panomc.com"
+        "prod", "production" -> "https://api.panomc.com"
+        else -> server.removeSuffix("/")
+    }
+    val cacheRoot = layout.buildDirectory.dir("license-key-cache").get().asFile
+    cacheRoot.mkdirs()
+    val cacheFile = cacheRoot.resolve(baseUrl.replace(Regex("[^A-Za-z0-9._-]"), "_") + ".pem")
+
+    if (!cacheFile.exists() || cacheFile.length() == 0L) {
+        logger.lifecycle("Fetching license public key from $baseUrl...")
+        val payload = try {
+            URL("$baseUrl/platform/api/licenses/public-key")
+                .openConnection()
+                .apply {
+                    connectTimeout = 10_000
+                    readTimeout = 10_000
+                    setRequestProperty("Accept", "application/json")
+                }
+                .getInputStream()
+                .bufferedReader()
+                .use { it.readText() }
+        } catch (e: Exception) {
+            throw GradleException(
+                "Failed to fetch license public key from $baseUrl/platform/api/licenses/public-key: " +
+                    "${e.message}. Either bring the license server up, drop the -PlicenseServer flag " +
+                    "(builds the plugin as FREE), or set -PpanoLicensePublicKey=<base64> manually.",
+                e
+            )
+        }
+        cacheFile.writeText(payload)
+    }
+    return parsePublicKeyResponse(cacheFile.readText())
+}
+
+fun parsePublicKeyResponse(rawJson: String): String {
+    val keyField = Regex("\"publicKeyBase64\"\\s*:\\s*\"([^\"]+)\"").find(rawJson)?.groupValues?.get(1)
+    if (!keyField.isNullOrBlank()) return stripPemAndWhitespace(keyField)
+    val pemField = Regex("\"publicKey\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"")
+        .find(rawJson)?.groupValues?.get(1)
+    if (!pemField.isNullOrBlank()) {
+        val unescaped = pemField.replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\")
+        return stripPemAndWhitespace(unescaped)
+    }
+    throw GradleException(
+        "License server response did not contain `publicKeyBase64` or `publicKey`. Got: ${rawJson.take(200)}"
+    )
+}
+
+fun stripPemAndWhitespace(input: String): String =
+    input
+        .replace(Regex("-----BEGIN [^-]+-----"), "")
+        .replace(Regex("-----END [^-]+-----"), "")
+        .replace(Regex("\\s+"), "")
+
 tasks {
+    register("generatePluginBuildConstants") {
+        val outputDir = premiumLicenseSrcDir
+        val versionString = version.toString()
+        val licenseServerInput = (project.findProperty("licenseServer") as String?) ?: ""
+        val explicitKeyInput = (panoLicensePublicKey ?: "")
+
+        outputs.dir(outputDir)
+        // Cache invalidation triggers: any of these inputs changing forces re-generation.
+        inputs.property("licenseServer", licenseServerInput)
+        inputs.property("panoLicensePublicKey", explicitKeyInput)
+        inputs.property("version", versionString)
+
+        doLast {
+            // Single-line Base64 SubjectPublicKeyInfo body or empty string for free builds.
+            val cleanedPubKey = resolveLicensePublicKey()
+            val file = outputDir.get().asFile
+                .resolve("com/panomc/plugins/license/PluginBuildConstants.kt")
+            file.parentFile.mkdirs()
+            val escapedPubKey = cleanedPubKey
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+            file.writeText(
+                """package com.panomc.plugins.license
+
+internal object PluginBuildConstants {
+    const val VERSION: String = "$versionString"
+    const val PANO_PUBLIC_KEY_BASE64: String = "$escapedPubKey"
+}
+"""
+            )
+        }
+    }
+
     register("installBun") {
         doLast {
             if (!bunBin.exists()) {
@@ -231,7 +346,16 @@ java {
 
 kotlin {
     jvmToolchain(11)
+    sourceSets.named("main") {
+        kotlin.srcDir(premiumLicenseSrcDir)
+    }
 }
+
+// Both compileKotlin AND kaptGenerateStubsKotlin consume the generated sources, so wire
+// the dependency on every Kotlin/kapt task that reads them. Plain `compileKotlin.dependsOn`
+// alone makes Gradle 9 fail with implicit-dependency validation errors on kapt stubs.
+tasks.matching { it.name == "compileKotlin" || it.name == "kaptGenerateStubsKotlin" }
+    .configureEach { dependsOn("generatePluginBuildConstants") }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {

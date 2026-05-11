@@ -196,4 +196,50 @@ Templates for translations must include support for **Turkish (tr)**, **English 
 
 ---
 
+## 💎 Premium Plugins (Paid)
+
+The boilerplate ships with a complete DRM client. To turn a free plugin into a premium plugin sold on panomc.com:
+
+1. **Publish your resource on panomc.com** with `price > 0`. The resource ID must match the plugin's `pluginId`.
+2. **Configure `gradle.properties`**:
+   ```properties
+   panoLicensePublicKey=<base64 panomc.com RSA public key — get it from panomc.com docs>
+   ```
+3. **Call the license check** at the top of `onStart`:
+   ```kotlin
+   override suspend fun onStart() {
+       PluginLicenseClient(this).requireValidLicense()
+       // ... rest of init
+   }
+   ```
+   `PluginLicenseClient.requireValidLicense()` is a no-op when `panoLicensePublicKey` is empty, so the same code stays valid for free plugins.
+4. **Sprinkle runtime checks** at critical call sites (route handlers, scheduled jobs, websocket handlers) using the `LicenseGuard` helper:
+   ```kotlin
+   override suspend fun handle(context: RoutingContext): Result {
+       LicenseGuard.assert(plugin)
+       // ... business logic
+   }
+   ```
+   Patching out a single check is not enough to crack the plugin if 5+ call sites all assert.
+5. **Release pipeline.** Each release uploads a new JAR to panomc.com (already automated via `:publishMavenPublication`). The website records the JAR's SHA-256 hash; license tokens are bound to that hash, so a recompiled/cracked JAR cannot fetch a fresh license.
+
+### How the DRM works
+
+```
+[Pano host]                                 [panomc.com]
+plugin.onStart                             /platform/api/licenses/issue
+  └── PluginLicenseClient.requireValidLicense
+        ├── host's LicenseManager fetches a JWT  ───────────────►  verifies user owns the resource
+        │                                        ◄───────  signs RS256 JWT (binds: panoPlatformId, resourceId, version, jarSha256, exp 1h)
+        ├── plugin verifies JWT signature with EMBEDDED key
+        ├── plugin verifies aud == pluginId
+        ├── plugin verifies ver == VERSION
+        ├── plugin verifies hash == own jarSha256
+        └── plugin verifies !expired
+```
+
+If any check fails, `LicenseRequiredException` propagates, PF4J marks the plugin as failed, and the host records the failure for the panel UI. Pano core itself continues to start so the operator can resolve the issue from the panel.
+
+---
+
 When I ask you to "Create a Pano Plugin" or "Add a feature to a Pano Plugin", strictly adhere to this architectural pattern.
