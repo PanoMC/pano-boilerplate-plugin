@@ -5,7 +5,7 @@
     "": {
       "name": "pano-boilerplate-plugin",
       "devDependencies": {
-        "@panomc/sdk": "1.0.0-dev.39",
+        "@panomc/sdk": "1.0.0-dev.53",
         "@rollup/plugin-node-resolve": "^16.0.0",
         "@rollup/plugin-terser": "^0.4.4",
         "cross-env": "^10.1.0",
@@ -38,7 +38,7 @@
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
-    "@panomc/sdk": ["@panomc/sdk@1.0.0-dev.39", "", { "dependencies": { "adm-zip": "^0.5.17", "svelte": "5.55.4", "tippy.js": "^6.3.7" } }, "sha512-+OVHyjjdl+1MgFpJkMIM+Vcj4tBULYe0OtckjNpg+LSF14iV0hGd0epd4XQo5KWdSuMv9i4/DHABHOs2eGaVaQ=="],
+    "@panomc/sdk": ["@panomc/sdk@1.0.0-dev.53", "", { "dependencies": { "adm-zip": "^0.5.17", "svelte": "5.55.4", "tippy.js": "^6.3.7" } }, "sha512-fOynmePGDHUPzHoykvjCVbP1MTDSUkAYgpxzixrv9+Q0RXX6wqI4JqD8jfFMTJHZMZ9Kd0gR89mfwutQPthmTA=="],
 
     "@popperjs/core": ["@popperjs/core@2.11.8", "", {}, "sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A=="],
 
