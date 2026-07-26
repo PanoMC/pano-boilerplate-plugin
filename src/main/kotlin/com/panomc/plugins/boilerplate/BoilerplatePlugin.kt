@@ -18,6 +18,15 @@ class BoilerplatePlugin : PanoPlugin() {
     override suspend fun onStart() {
         licenseClient.requireValidLicense()
         logger.info("Starting...")
+
+        // Freemium plugins (pluginFreemium=true in gradle.properties) gate paid features on a
+        // tier bought from the store instead of requiring a license to run at all. Tiers are
+        // ordered, so owning Ultra also satisfies hasTier("pro"):
+        //
+        //   if (hasTier("pro")) { enableProFeature() }
+        //
+        // Remove the requireValidLicense() call above if you go freemium — the two models are
+        // mutually exclusive and a freemium plugin asking for a license fails startup.
     }
 
     /**

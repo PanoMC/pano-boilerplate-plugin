@@ -56,6 +56,7 @@ val pluginLicense: String? by project
 val pluginSourceUrl: String? by project
 val pluginDependencies: String? by project
 val pluginRequires: String? by project
+val pluginFreemium: String? by project
 
 val organization: String? by project
 
@@ -271,6 +272,8 @@ internal object PluginBuildConstants {
             pluginSourceUrl?.let { attributes["source-url"] = it }
             pluginDependencies?.let { attributes["dependencies"] = it }
             pluginRequires?.let { attributes["requires"] = it }
+            // Read by the host into PanoPluginDescriptor.freemium; see gradle.properties.
+            pluginFreemium?.let { attributes["freemium"] = it }
         }
 
         archiveFileName.set("$pluginId-$version.jar")
