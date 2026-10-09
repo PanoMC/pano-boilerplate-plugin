@@ -1,4 +1,6 @@
 import java.net.URL
+import java.util.Properties
+import java.util.zip.ZipFile
 
 plugins {
     kotlin("jvm") version "2.2.21"
@@ -7,7 +9,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.panomc.plugins"
+group = "com.panomc.plugins.boilerplate"
 version =
     (if (project.hasProperty("version") && project.findProperty("version") != "unspecified") project.findProperty("version") else "local-build")!!
 
@@ -18,7 +20,11 @@ val handlebarsVersion: String by project
 val springContextVersion: String by project
 val bootstrap = (project.findProperty("bootstrap") as String?)?.toBoolean() ?: false
 val noui = project.hasProperty("noui")
-val pluginsDir: File? by rootProject.extra
+// Where copyJar puts the jar: the pluginsDir of the pano-web-platform tree when this plugin is built inside
+// it, else panoPluginsDir of gradle.properties (".." = the plugins folder this plugin lives in).
+val pluginsDir: File? =
+    (if (rootProject.extra.has("pluginsDir")) rootProject.extra["pluginsDir"] as File? else null)
+        ?: (findProperty("panoPluginsDir") as String?)?.takeIf { it.isNotBlank() }?.let { projectDir.resolve(it) }
 
 val os = System.getProperty("os.name").lowercase()
 val arch = System.getProperty("os.arch").lowercase()
@@ -47,6 +53,21 @@ val bunBinDir = File(bunDir, bunPlatform)
 var bunBin = if (isWindows) File(bunBinDir, "bun.exe") else File(bunBinDir, "bun")
 
 val pluginId: String by project
+
+// api-level: "panoApiLevel" of the pano-web-platform tree this plugin is built in, else "current" from
+// the pano-api-level.properties inside the Pano jar on compileClasspath. `apiLevel=` in gradle.properties lowers it.
+val panoApiLevel: String? by lazy {
+    (findProperty("apiLevel") as String?)
+        ?: (rootProject.findProperty("panoApiLevel") as String?)
+        ?: configurations.findByName("compileClasspath")?.files?.firstNotNullOfOrNull { jar ->
+            if (!jar.isFile || !jar.name.endsWith(".jar")) null
+            else ZipFile(jar).use { zip ->
+                zip.getEntry("pano-api-level.properties")?.let { entry ->
+                    Properties().apply { load(zip.getInputStream(entry)) }.getProperty("current")
+                }
+            }
+        }
+}
 val pluginName: String by project
 val pluginDescription: String? by project
 val pluginPanoVersion: String by project
@@ -262,6 +283,7 @@ internal object PluginBuildConstants {
     shadowJar {
         manifest {
             attributes["id"] = pluginId
+            panoApiLevel?.let { attributes["api-level"] = it }
             attributes["name"] = pluginName
             pluginDescription?.let { attributes["description"] = it }
             attributes["pano-version"] = pluginPanoVersion

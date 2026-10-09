@@ -1,5 +1,6 @@
 .gradle
 .idea
+.kotlin
 .vertx
 build
 
@@ -12,8 +13,3 @@ src/main/resources/plugin-ui
 /*.mjs
 
 src/main/resources/*.zip
-
-client
-server
-manifest.json
-bin

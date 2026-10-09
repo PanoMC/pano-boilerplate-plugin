@@ -1,0 +1,19 @@
+{
+  "controllers": {},
+  "format": 1,
+  "views": {
+    "boilerplate:HelloPage": {
+      "classes": [
+        "boilerplate-hello-page"
+      ],
+      "contract": 1,
+      "hooks": [],
+      "props": {
+        "message": {
+          "required": false
+        }
+      },
+      "slots": []
+    }
+  }
+}
