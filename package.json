@@ -8,7 +8,7 @@
     "check": "pano-plugin check"
   },
   "devDependencies": {
-    "@panomc/plugin-kit": "file:/home/kahverengi/Projects/Pano/theme-core/packages/plugin-kit",
-    "@panomc/sdk": "file:/home/kahverengi/Projects/Pano/theme-core/packages/sdk"
+    "@panomc/plugin-kit": "1.0.0-dev.62",
+    "@panomc/sdk": "2.0.0-dev.62"
   }
 }
