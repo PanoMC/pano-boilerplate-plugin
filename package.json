@@ -8,7 +8,7 @@
     "check": "pano-plugin check"
   },
   "devDependencies": {
-    "@panomc/plugin-kit": "1.0.0-dev.62",
-    "@panomc/sdk": "2.0.0-dev.62"
+    "@panomc/plugin-kit": "1.0.0-dev.65",
+    "@panomc/sdk": "2.0.0-dev.65"
   }
 }
