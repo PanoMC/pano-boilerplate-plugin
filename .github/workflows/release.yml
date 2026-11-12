@@ -88,4 +88,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        run: npx semantic-release@24.2.6
+        run: bash .github/scripts/semantic-release-retry.sh npx semantic-release@24.2.6
