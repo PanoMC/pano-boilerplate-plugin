@@ -29,6 +29,7 @@ of `src/main/kotlin/com/panomc/plugins/boilerplate/routes/GetHelloAPI.kt`.
 
 Build the jar with `./gradlew build` (add `-Pnoui` to skip the UI build); `bun run build` builds only the UI.
 
-Working with an AI coding agent: `agent-guide/README.md` routes to the rule file for each task (new view, endpoint,
-panel page, release, checks); `CLAUDE.md` / `AGENTS.md` point the agent at it. The longer docs are on
+Working with an AI coding agent: `AGENTS.md` routes to the rule file for each task (new view, endpoint, panel page,
+release, checks) in the `docs` submodule (`git submodule update --init docs`); `CLAUDE.md`, `GEMINI.md` and
+`.github/copilot-instructions.md` point the agent at it. The longer docs are on
 [panomc.com/docs](https://panomc.com/docs/handbook/addon/).
